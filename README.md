@@ -1,44 +1,38 @@
-# AI Answer Engine
+# AI Answer Engine 🚀 (In Progress)
 
-## Getting Started
+A full-stack AI-powered answer engine built with **Next.js, TypeScript, Groq SDK, and Cheerio**.  
+The app allows users to paste URLs or ask questions, scrapes content from websites, and provides answers using an LLM with proper context and source citation.  
 
-First, clone the repository and install the dependencies:
-```bash
-git clone https://github.com/team-headstart/ai-answer-engine.git
-```
+---
 
-Navigate to the project directory:
-```bash
-cd ai-answer-engine
-```
+## ✨ Features (Current)
+- [x] **Chat interface** where users can ask questions or paste links  
+- [x] **Regex-based URL detection** to identify and extract links from user input  
+- [x] **Web scraping with Cheerio + Axios** to pull page content (title, meta, headings, paragraphs, lists)  
+- [x] **Groq SDK integration** for LLM responses with context injection  
+- [x] **Prompt engineering** to ensure answers are based on scraped content  
 
-Then, install the dependencies:
+---
 
-```bash
-npm install
-```
+## 🛠️ In Progress
+- [ ] Add **Puppeteer fallback** for JavaScript-heavy pages that Cheerio can’t scrape  
+- [ ] Improve **prompt formatting** for more reliable answers  
+- [ ] Add **Redis caching + rate limiting**  
+- [ ] UI polish with **Tailwind CSS**  
 
-Then, run the development server:
-```bash
-npm run dev
-```
+---
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🧰 Tech Stack
+- **Frontend**: Next.js 15, TypeScript, React  
+- **Backend**: Next.js API Routes  
+- **AI/LLM**: Groq SDK (`llama-3.1-8b-instant`)  
+- **Scraping**: Cheerio + Axios  
+- **Styling**: Tailwind CSS (planned)  
 
-## Tasks
+---
 
-- Take a look at the TODOs throughout the repo, namely:
-
-    - `src/app/page.tsx`: Update the UI and handle the API response as needed
- 
-    - `src/app/api/chat/route.ts`: Implement the chat API with Groq and web scraping with Cheerio and Puppeteer
- 
-    - `src/middleware.ts`: Implement the code here to add rate limiting with Redis
-
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## ⚡ Getting Started
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/YOUR-USERNAME/ai-answer-engine.git
+   cd ai-answer-engine
