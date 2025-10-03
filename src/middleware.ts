@@ -3,13 +3,12 @@
 // Refer to Redis docs on Rate Limiting: https://upstash.com/docs/redis/sdks/ratelimit-ts/algorithms
 
 import { NextResponse } from "next/server";
-import type { NextRequest } from "next/server";
 
-export async function middleware(_request: NextRequest) {  // ✅ underscore so it's "unused but allowed"
+export async function middleware() {
   try {
     const response = NextResponse.next();
     return response;
-  } catch (_error) {   // ✅ underscore again
+  } catch (_error) {
     console.error(_error); // optional — helps debugging
     return NextResponse.next(); // fallback response
   }
