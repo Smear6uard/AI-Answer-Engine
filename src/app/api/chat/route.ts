@@ -5,40 +5,41 @@
 // Refer to Puppeteer docs here: https://pptr.dev/guides/what-is-puppeteer
 export const runtime = "nodejs";
 
-import {NextResponse} from "next/server"
-import { getGroqResponse } from "@/app/utils/groqClient"  
-import {scrapeURL, urlPattern} from "@/app/utils/scrapers"
+import { NextResponse } from "next/server";
+import { getGroqResponse } from "@/app/utils/groqClient";
+import { scrapeURL, urlPattern } from "@/app/utils/scrapers";
 
 export async function POST(req: Request) {
   try {
-    const {message} = await req.json()
+    const { message } = await req.json();
 
     const url = message.match(urlPattern);
 
-    let scrapedContent="";
-if (url){
-  console.log('url found', url)
-  const scraperResponse = await scrapeURL(url);
-  console.log('scraped content', scrapedContent);
-  scrapedContent = scraperResponse.content;
-}
-   const userQuery = message.replace(url ? url[0] : '', '').trim();
+    let scrapedContent = "";
+    if (url) {
+      console.log("url found", url);
+      const scraperResponse = await scrapeURL(url[0]); // use url[0] for the string
+      scrapedContent = scraperResponse.content;
+      console.log("scraped chars", scrapedContent.length);
+    }
 
-   const prompt = `
-   Answer my question: "${userQuery}"
+    const userQuery = message.replace(url ? url[0] : "", "").trim();
 
-   Based on the following context:
-   <content>
-    ${scrapedContent}
-   </content>
-   `
-    console.log('Prompt', prompt)
-    const response = await getGroqResponse(prompt)
+    const prompt = `
+    Answer my question: "${userQuery}"
 
-    return NextResponse.json ({message: response})
+    Based on the following context:
+    <content>
+      ${scrapedContent}
+    </content>
+    `;
 
-  } catch (error) {
+    console.log("Prompt", prompt);
+    const response = await getGroqResponse(prompt);
 
-return NextResponse.json({message: "error"})
+    return NextResponse.json({ message: response });
+  } catch (_error) { // ✅ rename to _error so ESLint is happy
+    console.error(_error); // optional but good for debugging
+    return NextResponse.json({ message: "error" });
   }
 }

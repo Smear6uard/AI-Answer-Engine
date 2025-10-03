@@ -5,21 +5,15 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export async function middleware(request: NextRequest) {
+export async function middleware(_request: NextRequest) {  // ✅ underscore so it's "unused but allowed"
   try {
-
     const response = NextResponse.next();
-
     return response;
-
-
-
-  } catch (error) {
-
-
+  } catch (_error) {   // ✅ underscore again
+    console.error(_error); // optional — helps debugging
+    return NextResponse.next(); // fallback response
   }
 }
-
 
 // Configure which paths the middleware runs on
 export const config = {
