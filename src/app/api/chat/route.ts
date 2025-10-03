@@ -3,6 +3,8 @@
 // Refer to the Groq SDK here on how to use an LLM: https://www.npmjs.com/package/groq-sdk
 // Refer to the Cheerio docs here on how to parse HTML: https://cheerio.js.org/docs/basics/loading
 // Refer to Puppeteer docs here: https://pptr.dev/guides/what-is-puppeteer
+export const runtime = "nodejs";
+
 import {NextResponse} from "next/server"
 import { getGroqResponse } from "@/app/utils/groqClient"  
 import {scrapeURL, urlPattern} from "@/app/utils/scrapers"
