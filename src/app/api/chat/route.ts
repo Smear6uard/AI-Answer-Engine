@@ -1,45 +1,91 @@
-// TODO: Implement the chat API with Groq and web scraping with Cheerio and Puppeteer
-// Refer to the Next.js Docs on how to read the Request body: https://nextjs.org/docs/app/building-your-application/routing/route-handlers
-// Refer to the Groq SDK here on how to use an LLM: https://www.npmjs.com/package/groq-sdk
-// Refer to the Cheerio docs here on how to parse HTML: https://cheerio.js.org/docs/basics/loading
-// Refer to Puppeteer docs here: https://pptr.dev/guides/what-is-puppeteer
 export const runtime = "nodejs";
 
 import { NextResponse } from "next/server";
 import { getGroqResponse } from "@/app/utils/groqClient";
 import { scrapeURL, urlPattern } from "@/app/utils/scrapers";
 
+interface Message {
+  role: 'user' | 'ai';
+  content: string;
+}
+
 export async function POST(req: Request) {
   try {
-    const { message } = await req.json();
+    const { message, history = [] } = await req.json() as { message: string; history: Message[] };
 
-    const url = message.match(urlPattern);
+    const urls = message.match(urlPattern);
+    const url = urls ? urls[0] : null;
 
     let scrapedContent = "";
+    let scrapeError = null;
+    let scraperUsed = null;
+
     if (url) {
-      console.log("url found", url);
-      const scraperResponse = await scrapeURL(url[0]); // use url[0] for the string
-      scrapedContent = scraperResponse.content;
-      console.log("scraped chars", scrapedContent.length);
+      const scraperResponse = await scrapeURL(url);
+
+      if (scraperResponse.scrapeError) {
+        scrapeError = scraperResponse.scrapeError;
+      } else {
+        scrapedContent = scraperResponse.content;
+        scraperUsed = scraperResponse.scraperUsed;
+      }
     }
 
-    const userQuery = message.replace(url ? url[0] : "", "").trim();
+    let userQuery = url ? message.replace(url, "").trim() : message.trim();
 
-    const prompt = `
-    Answer my question: "${userQuery}"
+    if (url) {
+      userQuery = userQuery
+        .replace(/^(give me a summary of this site:|summarize this site:|tell me about this site:|what is this site about:|analyze this website:|review this website:)/i, "")
+        .replace(/^(this site|this website|this page|this url)/i, "it")
+        .trim();
 
-    Based on the following context:
-    <content>
-      ${scrapedContent}
-    </content>
-    `;
+      if (!userQuery || userQuery.match(/^[.,!?;:\s]*$/)) {
+        userQuery = "Please provide a comprehensive summary and analysis of this website";
+      }
+    }
 
-    console.log("Prompt", prompt);
-    const response = await getGroqResponse(prompt);
+    let prompt;
+    if (scrapedContent) {
+      prompt = `User Question: "${userQuery}"
 
-    return NextResponse.json({ message: response });
-  } catch (_error) { // ✅ rename to _error so ESLint is happy
-    console.error(_error); // optional but good for debugging
-    return NextResponse.json({ message: "error" });
+WEBSITE CONTENT:
+${scrapedContent}
+
+Instructions:
+- Analyze the website content thoroughly and provide a comprehensive answer
+- Cite specific information from the content
+- Clearly indicate that your response is based on the scraped website data
+- If the content doesn't fully answer the question, state this limitation`;
+    } else if (scrapeError) {
+      prompt = `User Question: "${userQuery}"
+
+Note: Unable to access webpage content (Error: ${scrapeError})
+
+Instructions:
+- Provide a helpful answer using general knowledge
+- Mention that you couldn't access the specific webpage
+- Offer alternative suggestions if appropriate`;
+    } else {
+      prompt = `User Message: "${userQuery}"
+
+Instructions:
+- Provide a helpful, conversational response
+- Use your general knowledge to answer the question`;
+    }
+
+    const response = await getGroqResponse(prompt, history);
+
+    return NextResponse.json({
+      message: response,
+      scrapedContent: scrapedContent ? scrapedContent.substring(0, 200) + "..." : null,
+      scrapeError: scrapeError,
+      scraperUsed: scraperUsed
+    });
+  } catch (error) {
+    console.error("Chat API error:", error);
+    return NextResponse.json(
+      { message: "An error occurred processing your request" },
+      { status: 500 }
+    );
   }
 }

@@ -19,7 +19,9 @@ export default function Home() {
 
     // Add user message to the conversation
     const userMessage = { role: "user" as const, content: message };
-    setMessages(prev => [...prev, userMessage]);
+    const updatedMessages = [...messages, userMessage];
+    setMessages(updatedMessages);
+    const currentMessage = message;
     setMessage("");
     setIsLoading(true);
 
@@ -29,14 +31,13 @@ export default function Home() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ message }),
+        body: JSON.stringify({
+          message: currentMessage,
+          history: updatedMessages
+        }),
       });
 
-      // TODO: Handle the response from the chat API to display the AI response in the UI
-
       const data = await response.json();
-      console.log("data", data)
-
       setMessages(prev => [...prev, {role: "ai", content: data.message}]);
 
 
@@ -47,9 +48,6 @@ export default function Home() {
     }
   };
 
-
-  // TODO: Modify the color schemes, fonts, and UI as needed for a good user experience
-  // Refer to the Tailwind CSS docs here: https://tailwindcss.com/docs/customizing-colors, and here: https://tailwindcss.com/docs/hover-focus-and-other-states
   return (
     <div className="flex flex-col h-screen bg-gray-900">
       {/* Header */}
@@ -113,7 +111,7 @@ export default function Home() {
               type="text"
               value={message}
               onChange={e => setMessage(e.target.value)}
-              onKeyPress={e => e.key === "Enter" && handleSend()}
+              onKeyDown={e => e.key === "Enter" && handleSend()}
               placeholder="Type your message..."
               className="flex-1 rounded-xl border border-gray-700 bg-gray-900 px-4 py-3 text-gray-100 focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent placeholder-gray-400"
             />
