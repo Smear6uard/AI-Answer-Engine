@@ -1,6 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import * as cheerio from 'cheerio';
 import puppeteer from 'puppeteer';
+import { parseDocumentFromURL, getDocumentType } from './documentParser';
 
 async function retryRequest(url: string, maxRetries: number = 3): Promise<AxiosResponse> {
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
@@ -179,6 +180,23 @@ export async function scrapeURL(url: string) {
   try {
     if (!urlPattern.test(url)) {
       throw new Error('Invalid URL format');
+    }
+
+    // Check if URL is a document (PDF, DOCX)
+    const docType = getDocumentType(url);
+    if (docType) {
+      const docResult = await parseDocumentFromURL(url);
+      if (docResult) {
+        return {
+          url,
+          title: `${docType.toUpperCase()} Document`,
+          headings: { h1: '', h2: '', h3: '' },
+          metaDescription: docResult.pageCount ? `${docResult.pageCount} pages` : '',
+          content: docResult.content,
+          scrapeError: docResult.error || null,
+          scraperUsed: docType as 'pdf' | 'docx',
+        };
+      }
     }
 
     const response = await retryRequest(url);
