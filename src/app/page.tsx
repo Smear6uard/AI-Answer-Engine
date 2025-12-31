@@ -222,7 +222,8 @@ export default function Home() {
       role: "ai",
       content: "",
       displayedContent: "",
-      isStreaming: true
+      isStreaming: true,
+      attachment: uploadedFile ? { filename: uploadedFile.filename, type: uploadedFile.type } : undefined
     };
     setMessages(prev => [...prev, streamingMessage]);
 
@@ -307,6 +308,7 @@ export default function Home() {
               displayedContent: newMessages[lastIndex].displayedContent || "",
               isStreaming: true,
               sources,
+              attachment: newMessages[lastIndex].attachment,
             };
           }
           return newMessages;
@@ -323,6 +325,7 @@ export default function Home() {
             displayedContent: fullContent,
             isStreaming: false,
             sources,
+            attachment: newMessages[lastIndex].attachment,
           };
         }
         return newMessages;
@@ -404,6 +407,45 @@ export default function Home() {
       return msg.displayedContent || "";
     }
     return msg.displayedContent || msg.content;
+  };
+
+  const formatMessageContent = (text: string) => {
+    if (!text) return text;
+    
+    const paragraphs = text.split(/\n\s*\n/);
+    if (paragraphs.length === 1) {
+      const lines = text.split('\n');
+      return lines.map((line, idx) => (
+        <div key={idx} style={{ marginBottom: idx < lines.length - 1 ? '8px' : '0' }}>
+          {line || '\u00A0'}
+        </div>
+      ));
+    }
+    
+    return paragraphs.map((para, idx) => {
+      if (para.trim() === '') return null;
+      
+      const lines = para.split('\n');
+      return (
+        <div key={idx} style={{ marginBottom: idx < paragraphs.length - 1 ? '16px' : '0' }}>
+          {lines.map((line, lineIdx) => {
+            if (line.trim() === '') return <br key={lineIdx} />;
+            
+            const parts = line.split(/(\*\*[^*]+\*\*)/g);
+            return (
+              <div key={lineIdx} style={{ marginBottom: lineIdx < lines.length - 1 ? '4px' : '0' }}>
+                {parts.map((part, partIdx) => {
+                  if (part.startsWith('**') && part.endsWith('**')) {
+                    return <strong key={partIdx} style={{ color: '#ffffff', fontWeight: '600' }}>{part.slice(2, -2)}</strong>;
+                  }
+                  return <span key={partIdx}>{part}</span>;
+                })}
+              </div>
+            );
+          })}
+        </div>
+      );
+    }).filter(Boolean);
   };
 
   const formatTime = () => {
@@ -606,16 +648,31 @@ export default function Home() {
                   letterSpacing: '0.15em',
                   marginBottom: '8px',
                   color: msg.role === 'user' ? '#ff6b5b' : msg.isError ? '#ff4444' : '#4a4a4a',
-                  fontWeight: '500'
+                  fontWeight: '500',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px'
                 }}>
-                  {msg.role === 'user' ? '▸ YOU' : '◆ SYSTEM'}
-                  {msg.isStreaming && <span style={{ marginLeft: '8px', color: '#4a4a4a' }}>[STREAMING...]</span>}
+                  <span>{msg.role === 'user' ? '▸ YOU' : '◆ SYSTEM'}</span>
+                  {msg.isStreaming && <span style={{ color: '#4a4a4a' }}>[STREAMING...]</span>}
+                  {msg.attachment && (
+                    <span style={{
+                      fontSize: '9px',
+                      color: '#ff6b5b',
+                      backgroundColor: 'rgba(255, 107, 91, 0.1)',
+                      padding: '2px 8px',
+                      borderRadius: '12px',
+                      letterSpacing: '0.05em'
+                    }}>
+                      Analyzing: {msg.attachment.filename}
+                    </span>
+                  )}
                 </div>
                 
                 <div style={{
                   fontSize: '14px',
-                  lineHeight: '1.7',
-                  color: msg.role === 'user' ? '#ffffff' : msg.isError ? '#ff4444' : '#b0b0b0',
+                  lineHeight: '1.8',
+                  color: msg.role === 'user' ? '#ffffff' : msg.isError ? '#ff4444' : '#d4d4d4',
                   maxWidth: '640px',
                   whiteSpace: 'pre-wrap',
                   fontFamily: '"IBM Plex Mono", monospace',
@@ -627,7 +684,7 @@ export default function Home() {
                     marginTop: '4px'
                   })
                 }}>
-                  {getDisplayContent(msg)}
+                  {formatMessageContent(getDisplayContent(msg))}
                   {msg.isStreaming && msg.displayedContent !== msg.content && (
                     <span style={{
                       display: 'inline-block',
@@ -770,7 +827,7 @@ export default function Home() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
               onKeyDown={(e) => e.key === "Enter" && !e.shiftKey && handleSend()}
-              placeholder={uploadedFile ? "Query document..." : "Enter URL, upload file, or ask a question..."}
+              placeholder={uploadedFile ? "Query document..." : "Paste URL or ask a question"}
               disabled={isLoading}
               style={{
                 width: '100%',

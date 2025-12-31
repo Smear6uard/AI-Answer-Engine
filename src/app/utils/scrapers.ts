@@ -42,6 +42,9 @@ async function retryRequest(url: string, maxRetries: number = 3): Promise<AxiosR
 
 export const urlPattern = /https?:\/\/(?:www\.)?(?:[-a-z0-9]{1,63}\.)+[a-z]{2,63}(?::\d{2,5})?(?:[/?#][^\s"']*)?/gi;
 
+// Separate pattern for validation (no /g flag to avoid lastIndex state issues)
+const urlValidationPattern = /^https?:\/\/(?:www\.)?(?:[-a-z0-9]{1,63}\.)+[a-z]{2,63}(?::\d{2,5})?(?:[/?#][^\s"']*)?$/i;
+
 function cleanText(text: string): string {
   return text.replace(/\s+/g, ' ').trim();
 }
@@ -178,7 +181,7 @@ async function scrapePuppeteer(url: string) {
 
 export async function scrapeURL(url: string) {
   try {
-    if (!urlPattern.test(url)) {
+    if (!urlValidationPattern.test(url)) {
       throw new Error('Invalid URL format');
     }
 
